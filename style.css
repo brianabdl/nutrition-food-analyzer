@@ -465,7 +465,6 @@ body {
     line-height: 1.4;
     font-size: var(--font-size-base);
     text-transform: none; /* Preserve our custom formatting */
-    cursor: help; /* Show that there's a tooltip */
 }
 
 .food-name:hover {
@@ -474,7 +473,6 @@ body {
 }
 
 .nutrient-value {
-    font-family: 'Courier New', monospace;
     font-weight: 500;
     color: var(--gray-600);
 }
