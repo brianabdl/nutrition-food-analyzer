@@ -957,20 +957,6 @@ function createNutritionChart(comparisons) {
                     borderColor: 'rgba(37, 99, 235, 1)',
                     borderWidth: 1
                 },
-                {
-                    label: 'Minimum Standard',
-                    data: minValues,
-                    backgroundColor: 'rgba(16, 185, 129, 0.6)',
-                    borderColor: 'rgba(16, 185, 129, 1)',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Maximum Standard',
-                    data: maxValues,
-                    backgroundColor: 'rgba(239, 68, 68, 0.6)',
-                    borderColor: 'rgba(239, 68, 68, 1)',
-                    borderWidth: 1
-                }
             ]
         },
         options: {
