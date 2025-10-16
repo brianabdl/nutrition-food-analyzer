@@ -43,7 +43,7 @@ const NUTRIENT_MAPPING = {
 };
 
 // Application initialization
-$(document).ready(function() {
+$(document).ready(function () {
     console.log('Initializing Food Nutrition Comparison App...');
     initializeApp();
 });
@@ -63,11 +63,11 @@ function setupEventListeners() {
     // Search functionality
     $('#searchInput').on('input', handleSearch);
     $('#clearSearch').on('click', clearSearch);
-    
+
     // Modal functionality
     $('#closeModal').on('click', closeModal);
     $('#closeMultiModal').on('click', closeMultiModal);
-    $('.modal').on('click', function(e) {
+    $('.modal').on('click', function (e) {
         if (e.target === this) {
             if (e.target.id === 'multiComparisonModal') {
                 closeMultiModal();
@@ -76,33 +76,33 @@ function setupEventListeners() {
             }
         }
     });
-    
+
     // Multiple selection functionality
     $('#selectAll').on('change', handleSelectAll);
     $('#compareSelected').on('click', showMultiComparisonModal);
     $('#clearSelection').on('click', clearAllSelections);
     $('#chartNutrientSelect').on('change', updateMultiChart);
-    
+
     // Scroll to top functionality
     $('#scrollToTop').on('click', scrollToTableTop);
-    
+
     // Show/hide scroll to top button based on table scroll position
     $('.table-container').on('scroll', handleTableScroll);
-    
+
     // Pagination functionality
     $('#prevPage').on('click', goToPreviousPage);
     $('#nextPage').on('click', goToNextPage);
-    
+
     // Keyboard shortcuts
-    $(document).on('keydown', function(e) {
+    $(document).on('keydown', function (e) {
         if (e.key === 'Escape') {
             closeModal();
         }
     });
-    
+
     // Table sorting
     $('.sortable').on('click', handleSort);
-    
+
     console.log('Event listeners set up successfully');
 }
 
@@ -111,34 +111,34 @@ function setupEventListeners() {
  */
 async function loadData() {
     showLoading(true);
-    
+
     try {
         console.log('Loading CSV files...');
-        
+
         // Load both CSV files simultaneously
         const [foodsResponse, standardsResponse] = await Promise.all([
             fetch('foods.csv'),
             fetch('standard-nutrition.csv')
         ]);
-        
+
         if (!foodsResponse.ok || !standardsResponse.ok) {
             throw new Error('Failed to load CSV files');
         }
-        
+
         const foodsText = await foodsResponse.text();
         const standardsText = await standardsResponse.text();
-        
+
         // Parse CSV data
         foodsData = parseCSV(foodsText);
         standardsData = parseCSV(standardsText);
-        
+
         console.log(`Loaded ${foodsData.length} foods and ${standardsData.length} nutrition standards`);
-        
+
         // Initialize the display
         filteredFoodsData = [...foodsData];
         renderFoodTable();
         updateResultsCount();
-        
+
     } catch (error) {
         console.error('Error loading data:', error);
         showError('Failed to load nutrition data. Please check if CSV files are available.');
@@ -155,10 +155,10 @@ async function loadData() {
 function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
     if (lines.length < 2) return [];
-    
+
     const headers = lines[0].split(',').map(header => header.replace(/"/g, '').trim());
     const data = [];
-    
+
     for (let i = 1; i < lines.length; i++) {
         const values = parseCSVLine(lines[i]);
         if (values.length === headers.length) {
@@ -174,7 +174,7 @@ function parseCSV(csvText) {
             data.push(row);
         }
     }
-    
+
     return data;
 }
 
@@ -187,10 +187,10 @@ function parseCSVLine(line) {
     const values = [];
     let current = '';
     let inQuotes = false;
-    
+
     for (let i = 0; i < line.length; i++) {
         const char = line[i];
-        
+
         if (char === '"') {
             inQuotes = !inQuotes;
         } else if (char === ',' && !inQuotes) {
@@ -200,7 +200,7 @@ function parseCSVLine(line) {
             current += char;
         }
     }
-    
+
     values.push(current);
     return values;
 }
@@ -211,38 +211,38 @@ function parseCSVLine(line) {
 function renderFoodTable() {
     const tbody = $('#foodTableBody');
     tbody.empty();
-    
+
     if (filteredFoodsData.length === 0) {
         $('#noResults').show();
         $('.table-section').hide();
         $('#paginationSection').hide();
         return;
     }
-    
+
     $('#noResults').hide();
     $('.table-section').show();
     $('#paginationSection').show();
-    
+
     // Calculate pagination
     totalPages = Math.ceil(filteredFoodsData.length / itemsPerPage);
-    
+
     // Ensure current page is valid
     if (currentPage > totalPages) {
         currentPage = 1;
     }
-    
+
     // Calculate start and end indices for current page
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, filteredFoodsData.length);
-    
+
     // Get data for current page
     const pageData = filteredFoodsData.slice(startIndex, endIndex);
-    
+
     pageData.forEach((food, pageIndex) => {
         const actualIndex = startIndex + pageIndex; // Real index in filteredFoodsData
         const formattedFoodName = formatFoodName(food.Menu);
         const isSelected = selectedFoods.some(sf => sf.originalIndex === actualIndex);
-        
+
         const row = $(`
             <tr data-index="${actualIndex}" class="${isSelected ? 'selected-row' : ''}">
                 <td class="select-column">
@@ -271,22 +271,22 @@ function renderFoodTable() {
                 </td>
             </tr>
         `);
-        
+
         tbody.append(row);
     });
-    
+
     // Attach click handlers for analyze buttons
-    $('.btn-analyze').on('click', function() {
+    $('.btn-analyze').on('click', function () {
         const foodIndex = $(this).data('food-index');
         showNutritionModal(filteredFoodsData[foodIndex]);
     });
-    
+
     // Setup scroll indicator for table
     setupScrollIndicator();
-    
+
     // Update pagination controls
     updatePaginationControls();
-    
+
     // Update pagination info
     updatePaginationInfo(startIndex, endIndex);
 }
@@ -296,10 +296,10 @@ function renderFoodTable() {
  */
 function setupScrollIndicator() {
     const tableContainer = $('.table-container');
-    
-    tableContainer.on('scroll', function() {
+
+    tableContainer.on('scroll', function () {
         const scrollTop = $(this).scrollTop();
-        
+
         if (scrollTop > 0) {
             $(this).addClass('scrolled');
         } else {
@@ -314,7 +314,7 @@ function setupScrollIndicator() {
 function handleTableScroll() {
     const scrollTop = $(this).scrollTop();
     const scrollToTopBtn = $('#scrollToTop');
-    
+
     if (scrollTop > 200) { // Show button after scrolling 200px
         scrollToTopBtn.fadeIn(300);
     } else {
@@ -338,24 +338,24 @@ function updatePaginationControls() {
     // Update previous/next buttons
     $('#prevPage').prop('disabled', currentPage <= 1);
     $('#nextPage').prop('disabled', currentPage >= totalPages);
-    
+
     // Generate page numbers
     const pageNumbers = $('#pageNumbers');
     pageNumbers.empty();
-    
+
     if (totalPages <= 1) {
         return;
     }
-    
+
     const maxVisiblePages = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
+
     // Adjust start page if we're near the end
     if (endPage - startPage < maxVisiblePages - 1) {
         startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-    
+
     // Add first page and ellipsis if needed
     if (startPage > 1) {
         pageNumbers.append(`<span class="page-number" data-page="1">1</span>`);
@@ -363,13 +363,13 @@ function updatePaginationControls() {
             pageNumbers.append(`<span class="page-ellipsis">...</span>`);
         }
     }
-    
+
     // Add page numbers
     for (let i = startPage; i <= endPage; i++) {
         const isActive = i === currentPage ? 'active' : '';
         pageNumbers.append(`<span class="page-number ${isActive}" data-page="${i}">${i}</span>`);
     }
-    
+
     // Add last page and ellipsis if needed
     if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
@@ -377,9 +377,9 @@ function updatePaginationControls() {
         }
         pageNumbers.append(`<span class="page-number" data-page="${totalPages}">${totalPages}</span>`);
     }
-    
+
     // Attach click handlers to page numbers
-    $('.page-number').on('click', function() {
+    $('.page-number').on('click', function () {
         const page = parseInt($(this).data('page'));
         goToPage(page);
     });
@@ -392,7 +392,7 @@ function updatePaginationInfo(startIndex, endIndex) {
     $('#showingStart').text(startIndex + 1);
     $('#showingEnd').text(endIndex);
     $('#totalItems').text(filteredFoodsData.length);
-    
+
     // Update table info bar
     $('#currentPageDisplay').text(currentPage);
     $('#totalPagesDisplay').text(totalPages);
@@ -407,7 +407,7 @@ function goToPage(page) {
         currentPage = page;
         renderFoodTable();
         updateResultsCount();
-        
+
         // Scroll to top of table when changing pages
         $('.table-container').scrollTop(0);
     }
@@ -440,11 +440,11 @@ function formatNutrientValue(value) {
     if (value === null || value === undefined || value === '') {
         return '-';
     }
-    
+
     if (typeof value === 'number') {
         return value.toFixed(2);
     }
-    
+
     return value.toString();
 }
 
@@ -468,10 +468,10 @@ function formatFoodName(foodName) {
     if (!foodName || typeof foodName !== 'string') {
         return 'Unknown Food';
     }
-    
+
     // Clean the food name while preserving original Indonesian terms
     let formatted = foodName.trim();
-    
+
     // Handle specific patterns and clean formatting
     formatted = formatted
         // Clean up extra spaces and special characters
@@ -481,41 +481,41 @@ function formatFoodName(foodName) {
         .replace(/\s*\-\s*/g, ' - ')
         .replace(/\s*\(\s*/g, ' (')
         .replace(/\s*\)\s*/g, ') ')
-        
+
         // Handle parentheses content
         .replace(/\(\s*>\s*(\d+)\s*(.*?)\s*\)/gi, '(>$1 $2)')
-        
+
         // Fix common abbreviations and spacing issues
         .replace(/\bpt(h?)\b/gi, 'putih')
         .replace(/\bcampur\b/gi, 'campur')
-        
+
         // Clean up slashes and special characters
         .replace(/\s*\/\s*/g, ' / ')
         .replace(/\s*\\\s*/g, ' / ');
-    
+
     // Capitalize each word properly while preserving Indonesian terms
-    formatted = formatted.replace(/\b\w+/g, function(word) {
+    formatted = formatted.replace(/\b\w+/g, function (word) {
         // Handle special cases for acronyms
         const acronyms = ['dna', 'rna', 'ph', 'mg', 'kg', 'ml', 'dl', 'cl'];
-        
+
         if (acronyms.includes(word.toLowerCase())) {
             return word.toUpperCase();
         }
-        
+
         // Capitalize first letter, keep rest as is for Indonesian words
         return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     });
-    
+
     // Ensure first word is always capitalized
     formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
-    
+
     // Clean up final formatting
     formatted = formatted
         .replace(/\s+/g, ' ')
         .replace(/\s+([\/\-\+\(\)])/g, ' $1')
         .replace(/([\/\-\+\(\)])\s+/g, '$1 ')
         .trim();
-    
+
     return formatted;
 }
 
@@ -524,7 +524,7 @@ function formatFoodName(foodName) {
  */
 function handleSearch() {
     const searchTerm = $('#searchInput').val().toLowerCase().trim();
-    
+
     // Show/hide clear button based on search input
     if (searchTerm === '') {
         $('#clearSearch').hide();
@@ -534,12 +534,12 @@ function handleSearch() {
         filteredFoodsData = foodsData.filter(food => {
             const originalName = (food.Menu || '').toLowerCase();
             const formattedName = formatFoodName(food.Menu).toLowerCase();
-            
+
             // Search in both original and formatted names
             return originalName.includes(searchTerm) || formattedName.includes(searchTerm);
         });
     }
-    
+
     // Reset to first page when searching
     currentPage = 1;
     renderFoodTable();
@@ -573,36 +573,36 @@ function updateResultsCount() {
 function handleSort(e) {
     const $th = $(e.currentTarget);
     const column = $th.data('column');
-    const currentSort = $th.hasClass('sort-asc') ? 'asc' : 
-                       $th.hasClass('sort-desc') ? 'desc' : 'none';
-    
+    const currentSort = $th.hasClass('sort-asc') ? 'asc' :
+        $th.hasClass('sort-desc') ? 'desc' : 'none';
+
     // Remove sort classes from all headers
     $('.sortable').removeClass('sort-asc sort-desc');
-    
+
     // Determine new sort direction
     let newSort = 'asc';
     if (currentSort === 'asc') {
         newSort = 'desc';
     }
-    
+
     // Add sort class to current header
     $th.addClass(`sort-${newSort}`);
-    
+
     // Sort the data
     filteredFoodsData.sort((a, b) => {
         let aVal = a[column];
         let bVal = b[column];
-        
+
         // Handle missing or null values
         if (aVal === null || aVal === undefined || aVal === '') aVal = '';
         if (bVal === null || bVal === undefined || bVal === '') bVal = '';
-        
+
         // Special handling for Menu column (food names) - sort alphabetically
         if (column === 'Menu') {
             // Use formatted food names for consistent sorting
             aVal = formatFoodName(aVal).toLowerCase();
             bVal = formatFoodName(bVal).toLowerCase();
-            
+
             if (newSort === 'asc') {
                 return aVal.localeCompare(bVal);
             } else {
@@ -612,10 +612,10 @@ function handleSort(e) {
             // For numeric columns, convert to numbers
             if (aVal === '') aVal = -Infinity;
             if (bVal === '') bVal = -Infinity;
-            
+
             if (typeof aVal === 'string' && !isNaN(aVal)) aVal = parseFloat(aVal);
             if (typeof bVal === 'string' && !isNaN(bVal)) bVal = parseFloat(bVal);
-            
+
             if (newSort === 'asc') {
                 return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
             } else {
@@ -623,7 +623,7 @@ function handleSort(e) {
             }
         }
     });
-    
+
     renderFoodTable();
 }
 
@@ -633,26 +633,26 @@ function handleSort(e) {
  */
 function showNutritionModal(food) {
     console.log('Showing nutrition modal for:', food.Menu);
-    
+
     // Set modal title with formatted name
     const formattedName = formatFoodName(food.Menu);
     $('#modalFoodName').text(formattedName);
-    
+
     // Generate comparison data
     const comparisonData = generateComparisonData(food);
-    
+
     // Update summary cards
     updateSummaryCards(comparisonData);
-    
+
     // Render comparison table
     renderComparisonTable(comparisonData);
-    
+
     // Render nutrient information cards
     renderNutrientInfoCards(comparisonData);
-    
+
     // Create nutrition chart
     createNutritionChart(comparisonData);
-    
+
     // Show modal
     $('#nutritionModal').fadeIn(300);
     $('body').addClass('modal-open');
@@ -665,11 +665,11 @@ function showNutritionModal(food) {
  */
 function generateComparisonData(food) {
     const comparisons = [];
-    
+
     Object.keys(NUTRIENT_MAPPING).forEach(nutrient => {
         const foodValue = food[nutrient];
         const standard = standardsData.find(s => s.Nutrisi === nutrient);
-        
+
         const comparison = {
             nutrient: nutrient,
             foodValue: foodValue,
@@ -678,12 +678,12 @@ function generateComparisonData(food) {
             statusText: 'No Standard',
             inRange: false
         };
-        
+
         if (standard && (standard.Minimum || standard.Maximum)) {
             const min = parseFloat(standard.Minimum) || null;
             const max = parseFloat(standard.Maximum) || null;
             const value = parseFloat(foodValue) || 0;
-            
+
             if (min !== null && max !== null) {
                 if (value >= min && value <= max) {
                     comparison.status = 'normal';
@@ -716,10 +716,10 @@ function generateComparisonData(food) {
                 }
             }
         }
-        
+
         comparisons.push(comparison);
     });
-    
+
     return comparisons;
 }
 
@@ -731,7 +731,7 @@ function updateSummaryCards(comparisons) {
     const totalNutrients = comparisons.length;
     const safeNutrients = comparisons.filter(c => c.inRange).length;
     const safetyPercentage = totalNutrients > 0 ? Math.round((safeNutrients / totalNutrients) * 100) : 0;
-    
+
     $('#totalNutrients').text(totalNutrients);
     $('#safeNutrients').text(safeNutrients);
     $('#safetyPercentage').text(`${safetyPercentage}%`);
@@ -744,16 +744,16 @@ function updateSummaryCards(comparisons) {
 function renderComparisonTable(comparisons) {
     const tbody = $('#comparisonTableBody');
     tbody.empty();
-    
+
     comparisons.forEach(comparison => {
         const standard = comparison.standard;
         let rangeText = 'No standard available';
-        
+
         if (standard) {
             const min = standard.Minimum;
             const max = standard.Maximum;
             const recommendation = standard['Rekomendasi Harian Anak (1-5 tahun)'];
-            
+
             if (min && max) {
                 rangeText = `${min} - ${max}`;
             } else if (min) {
@@ -764,7 +764,7 @@ function renderComparisonTable(comparisons) {
                 rangeText = recommendation;
             }
         }
-        
+
         const row = $(`
             <tr class="comparison-row" data-nutrient="${comparison.nutrient}">
                 <td>
@@ -787,12 +787,12 @@ function renderComparisonTable(comparisons) {
                 </td>
             </tr>
         `);
-        
+
         tbody.append(row);
     });
-    
+
     // Attach click handlers for info buttons
-    $('.info-btn').on('click', function(e) {
+    $('.info-btn').on('click', function (e) {
         e.stopPropagation();
         const nutrient = $(this).data('nutrient');
         showNutrientTooltip(e, nutrient);
@@ -821,10 +821,10 @@ function getStatusIcon(status) {
 function showNutrientTooltip(event, nutrient) {
     const standard = standardsData.find(s => s.Nutrisi === nutrient);
     if (!standard) return;
-    
+
     const tooltip = $('#tooltip');
     let content = `<strong>${nutrient}</strong><br>`;
-    
+
     if (standard['Fungsi Zat']) {
         content += `<strong>Function:</strong> ${standard['Fungsi Zat']}<br>`;
     }
@@ -834,13 +834,13 @@ function showNutrientTooltip(event, nutrient) {
     if (standard['Dampak Kekurangan']) {
         content += `<strong>Deficiency Effects:</strong> ${standard['Dampak Kekurangan']}`;
     }
-    
+
     tooltip.html(content);
     tooltip.css({
         top: event.pageY + 10,
         left: event.pageX + 10
     }).addClass('show');
-    
+
     // Hide tooltip after 5 seconds or on next click
     setTimeout(() => tooltip.removeClass('show'), 5000);
     $(document).one('click', () => tooltip.removeClass('show'));
@@ -853,12 +853,12 @@ function showNutrientTooltip(event, nutrient) {
 function renderNutrientInfoCards(comparisons) {
     const container = $('#nutrientInfoSection');
     container.empty();
-    
+
     // Filter comparisons that have detailed standard information
-    const detailedComparisons = comparisons.filter(c => 
+    const detailedComparisons = comparisons.filter(c =>
         c.standard && (c.standard['Fungsi Zat'] || c.standard['Dampak Kelebihan'] || c.standard['Dampak Kekurangan'])
     );
-    
+
     detailedComparisons.slice(0, 6).forEach(comparison => {
         const standard = comparison.standard;
         const card = $(`
@@ -890,7 +890,7 @@ function renderNutrientInfoCards(comparisons) {
                 ` : ''}
             </div>
         `);
-        
+
         container.append(card);
     });
 }
@@ -917,18 +917,18 @@ function getNutrientIcon(nutrient) {
 function createNutritionChart(comparisons) {
     const canvas = document.getElementById('nutritionChart');
     const ctx = canvas.getContext('2d');
-    
+
     // Destroy existing chart if it exists
     if (currentChart) {
         currentChart.destroy();
     }
-    
+
     // Filter comparisons with valid standards and food values
-    const validComparisons = comparisons.filter(c => 
-        c.standard && c.foodValue !== null && c.foodValue !== undefined && 
+    const validComparisons = comparisons.filter(c =>
+        c.standard && c.foodValue !== null && c.foodValue !== undefined &&
         (c.standard.Minimum || c.standard.Maximum)
     ).slice(0, 10); // Limit to 10 nutrients for better visualization
-    
+
     if (validComparisons.length === 0) {
         // Show message if no data available for chart
         ctx.fillStyle = '#64748b';
@@ -937,12 +937,12 @@ function createNutritionChart(comparisons) {
         ctx.fillText('No chart data available', canvas.width / 2, canvas.height / 2);
         return;
     }
-    
+
     const labels = validComparisons.map(c => c.nutrient.replace(/ \([^)]*\)/g, '')); // Remove units from labels
     const foodValues = validComparisons.map(c => parseFloat(c.foodValue) || 0);
     const minValues = validComparisons.map(c => parseFloat(c.standard.Minimum) || 0);
     const maxValues = validComparisons.map(c => parseFloat(c.standard.Maximum) || parseFloat(c.standard.Minimum) || 0);
-    
+
     currentChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -955,20 +955,6 @@ function createNutritionChart(comparisons) {
                     borderColor: 'rgba(37, 99, 235, 1)',
                     borderWidth: 1
                 },
-                {
-                    label: 'Minimum Standard',
-                    data: minValues,
-                    backgroundColor: 'rgba(16, 185, 129, 0.6)',
-                    borderColor: 'rgba(16, 185, 129, 1)',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Maximum Standard',
-                    data: maxValues,
-                    backgroundColor: 'rgba(239, 68, 68, 0.6)',
-                    borderColor: 'rgba(239, 68, 68, 1)',
-                    borderWidth: 1
-                }
             ]
         },
         options: {
@@ -984,7 +970,7 @@ function createNutritionChart(comparisons) {
                 },
                 tooltip: {
                     callbacks: {
-                        afterLabel: function(context) {
+                        afterLabel: function (context) {
                             const comparison = validComparisons[context.dataIndex];
                             return `Status: ${comparison.statusText}`;
                         }
@@ -1020,7 +1006,7 @@ function createNutritionChart(comparisons) {
 function closeModal() {
     $('#nutritionModal').fadeOut(300);
     $('body').removeClass('modal-open');
-    
+
     // Destroy chart when closing modal
     if (currentChart) {
         currentChart.destroy();
@@ -1048,7 +1034,7 @@ function showLoading(show) {
  */
 function showError(message) {
     console.error(message);
-    
+
     // Create and show error modal or notification
     const errorHtml = `
         <div class="error-message" style="
@@ -1075,9 +1061,9 @@ function showError(message) {
             ">&times;</button>
         </div>
     `;
-    
+
     $('body').append(errorHtml);
-    
+
     // Auto-remove error after 5 seconds
     setTimeout(() => {
         $('.error-message').fadeOut();
@@ -1107,12 +1093,12 @@ function debounce(func, wait) {
  */
 function handleSelectAll() {
     const isChecked = $('#selectAll').is(':checked');
-    
+
     if (isChecked) {
         // Select up to maxSelections items
         const itemsToSelect = Math.min(filteredFoodsData.length, maxSelections);
         selectedFoods = [];
-        
+
         for (let i = 0; i < itemsToSelect; i++) {
             const food = filteredFoodsData[i];
             selectedFoods.push({
@@ -1124,7 +1110,7 @@ function handleSelectAll() {
     } else {
         selectedFoods = [];
     }
-    
+
     updateSelectionUI();
     renderFoodTable();
 }
@@ -1134,7 +1120,7 @@ function handleSelectAll() {
  */
 function handleFoodSelection(foodIndex) {
     const isCurrentlySelected = selectedFoods.some(sf => sf.originalIndex === foodIndex);
-    
+
     if (isCurrentlySelected) {
         selectedFoods = selectedFoods.filter(sf => sf.originalIndex !== foodIndex);
     } else {
@@ -1142,7 +1128,7 @@ function handleFoodSelection(foodIndex) {
             showError(`Maximum ${maxSelections} foods can be selected for comparison`);
             return;
         }
-        
+
         const food = filteredFoodsData[foodIndex];
         selectedFoods.push({
             food: food,
@@ -1150,7 +1136,7 @@ function handleFoodSelection(foodIndex) {
             formattedName: formatFoodName(food.Menu)
         });
     }
-    
+
     updateSelectionUI();
     renderFoodTable();
 }
@@ -1160,17 +1146,17 @@ function handleFoodSelection(foodIndex) {
  */
 function updateSelectionUI() {
     const count = selectedFoods.length;
-    
+
     $('#selectedCount').text(count);
     $('#compareSelected').prop('disabled', count < 2);
-    
+
     // Show/hide comparison toolbar
     if (count > 0) {
         $('#comparisonToolbar').show();
     } else {
         $('#comparisonToolbar').hide();
     }
-    
+
     // Update select all checkbox
     $('#selectAll').prop('checked', count > 0 && count === Math.min(filteredFoodsData.length, maxSelections));
 }
@@ -1192,25 +1178,25 @@ function showMultiComparisonModal() {
         showError('Please select at least 2 foods to compare');
         return;
     }
-    
+
     console.log('Showing multi-comparison modal for', selectedFoods.length, 'foods');
-    
+
     // Update summary
     $('#comparedFoodsCount').text(selectedFoods.length);
     $('#multiNutrientsCount').text(Object.keys(NUTRIENT_MAPPING).length);
-    
+
     // Render selected foods list
     renderSelectedFoodsList();
-    
+
     // Render comparison table
     renderMultiComparisonTable();
-    
+
     // Create multi-comparison chart
     createMultiComparisonChart();
-    
+
     // Generate insights
     generateNutritionalInsights();
-    
+
     // Show modal
     $('#multiComparisonModal').fadeIn(300);
     $('body').addClass('modal-open');
@@ -1222,11 +1208,11 @@ function showMultiComparisonModal() {
 function renderSelectedFoodsList() {
     const container = $('#selectedFoodsList');
     container.empty();
-    
+
     selectedFoods.forEach((selectedFood, index) => {
         const food = selectedFood.food;
         const energyValue = formatNutrientValue(food['Energy (kJ)']);
-        
+
         const card = $(`
             <div class="selected-food-card">
                 <div class="food-icon">
@@ -1238,7 +1224,7 @@ function renderSelectedFoodsList() {
                 </div>
             </div>
         `);
-        
+
         container.append(card);
     });
 }
@@ -1249,10 +1235,10 @@ function renderSelectedFoodsList() {
 function renderMultiComparisonTable() {
     const header = $('#multiComparisonHeader');
     const body = $('#multiComparisonBody');
-    
+
     header.empty();
     body.empty();
-    
+
     // Create header
     let headerRow = '<tr><th class="nutrient-name">Nutrient</th>';
     selectedFoods.forEach(selectedFood => {
@@ -1260,24 +1246,24 @@ function renderMultiComparisonTable() {
     });
     headerRow += '<th>Recommended Range</th></tr>';
     header.html(headerRow);
-    
+
     // Create rows for each nutrient
     Object.keys(NUTRIENT_MAPPING).forEach(nutrient => {
         const standard = standardsData.find(s => s.Nutrisi === nutrient);
         let row = `<tr><td class="nutrient-name"><strong>${nutrient}</strong></td>`;
-        
+
         // Add values for each selected food
         selectedFoods.forEach(selectedFood => {
             const value = selectedFood.food[nutrient];
             const formattedValue = formatNutrientValue(value);
-            
+
             // Determine status color based on standard
             let statusClass = '';
             if (standard && (standard.Minimum || standard.Maximum)) {
                 const min = parseFloat(standard.Minimum) || null;
                 const max = parseFloat(standard.Maximum) || null;
                 const numValue = parseFloat(value) || 0;
-                
+
                 if (min !== null && max !== null) {
                     if (numValue >= min && numValue <= max) {
                         statusClass = 'status-normal';
@@ -1288,10 +1274,10 @@ function renderMultiComparisonTable() {
                     }
                 }
             }
-            
+
             row += `<td><span class="${statusClass}">${formattedValue}</span></td>`;
         });
-        
+
         // Add recommended range
         let rangeText = 'No standard';
         if (standard) {
@@ -1307,7 +1293,7 @@ function renderMultiComparisonTable() {
                 rangeText = standard['Rekomendasi Harian Anak (1-5 tahun)'];
             }
         }
-        
+
         row += `<td>${rangeText}</td></tr>`;
         body.append(row);
     });
@@ -1319,12 +1305,12 @@ function renderMultiComparisonTable() {
 function createMultiComparisonChart() {
     const canvas = document.getElementById('multiComparisonChart');
     const ctx = canvas.getContext('2d');
-    
+
     // Destroy existing chart if it exists
     if (multiChart) {
         multiChart.destroy();
     }
-    
+
     updateMultiChart();
 }
 
@@ -1335,26 +1321,26 @@ function updateMultiChart() {
     const selectedNutrient = $('#chartNutrientSelect').val();
     const canvas = document.getElementById('multiComparisonChart');
     const ctx = canvas.getContext('2d');
-    
+
     // Destroy existing chart if it exists
     if (multiChart) {
         multiChart.destroy();
     }
-    
+
     let datasets = [];
     let labels = [];
-    
+
     if (selectedNutrient === 'all') {
         // Show major nutrients for all foods
         const majorNutrients = ['Energy (kJ)', 'Protein (g)', 'Fat (g)', 'Carbohydrates (g)'];
         labels = majorNutrients.map(n => n.replace(/ \([^)]*\)/g, ''));
-        
+
         selectedFoods.forEach((selectedFood, index) => {
             const data = majorNutrients.map(nutrient => {
                 const value = selectedFood.food[nutrient];
                 return parseFloat(value) || 0;
             });
-            
+
             const colors = [
                 'rgba(37, 99, 235, 0.8)',
                 'rgba(16, 185, 129, 0.8)',
@@ -1362,7 +1348,7 @@ function updateMultiChart() {
                 'rgba(245, 158, 11, 0.8)',
                 'rgba(139, 92, 246, 0.8)'
             ];
-            
+
             datasets.push({
                 label: selectedFood.formattedName,
                 data: data,
@@ -1378,7 +1364,7 @@ function updateMultiChart() {
             const value = selectedFood.food[selectedNutrient];
             return parseFloat(value) || 0;
         });
-        
+
         datasets.push({
             label: selectedNutrient,
             data: data,
@@ -1387,7 +1373,7 @@ function updateMultiChart() {
             borderWidth: 1
         });
     }
-    
+
     multiChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -1425,50 +1411,50 @@ function updateMultiChart() {
 function generateNutritionalInsights() {
     const container = $('#nutritionalInsights');
     container.empty();
-    
+
     // Analyze energy content
     const energyValues = selectedFoods.map(sf => parseFloat(sf.food['Energy (kJ)']) || 0);
     const avgEnergy = energyValues.reduce((a, b) => a + b, 0) / energyValues.length;
     const maxEnergy = Math.max(...energyValues);
     const minEnergy = Math.min(...energyValues);
     const highestEnergyFood = selectedFoods[energyValues.indexOf(maxEnergy)];
-    
+
     const energyCard = $(`
         <div class="insight-card ${maxEnergy > 2000 ? 'highlight' : 'positive'}">
             <h4><i class="fas fa-bolt"></i> Energy Analysis</h4>
             <p>Average energy: <strong>${avgEnergy.toFixed(0)} kJ</strong></p>
             <p>Highest: <strong>${highestEnergyFood.formattedName}</strong> (${maxEnergy.toFixed(0)} kJ)</p>
             <div class="recommendation">
-                ${maxEnergy > 2000 ? 
-                    'Some selected foods are high in energy. Consider portion control.' : 
-                    'Energy levels are moderate. Good for balanced nutrition.'
-                }
+                ${maxEnergy > 2000 ?
+            'Some selected foods are high in energy. Consider portion control.' :
+            'Energy levels are moderate. Good for balanced nutrition.'
+        }
             </div>
         </div>
     `);
     container.append(energyCard);
-    
+
     // Analyze protein content
     const proteinValues = selectedFoods.map(sf => parseFloat(sf.food['Protein (g)']) || 0);
     const avgProtein = proteinValues.reduce((a, b) => a + b, 0) / proteinValues.length;
     const maxProtein = Math.max(...proteinValues);
     const highestProteinFood = selectedFoods[proteinValues.indexOf(maxProtein)];
-    
+
     const proteinCard = $(`
         <div class="insight-card ${avgProtein >= 15 ? 'positive' : 'highlight'}">
             <h4><i class="fas fa-dumbbell"></i> Protein Analysis</h4>
             <p>Average protein: <strong>${avgProtein.toFixed(1)} g</strong></p>
             <p>Highest: <strong>${highestProteinFood.formattedName}</strong> (${maxProtein.toFixed(1)} g)</p>
             <div class="recommendation">
-                ${avgProtein >= 15 ? 
-                    'Good protein content. Excellent for growth and development.' : 
-                    'Consider adding more protein-rich foods to meet daily requirements.'
-                }
+                ${avgProtein >= 15 ?
+            'Good protein content. Excellent for growth and development.' :
+            'Consider adding more protein-rich foods to meet daily requirements.'
+        }
             </div>
         </div>
     `);
     container.append(proteinCard);
-    
+
     // Analyze variety
     const varietyCard = $(`
         <div class="insight-card positive">
@@ -1488,7 +1474,7 @@ function generateNutritionalInsights() {
 function closeMultiModal() {
     $('#multiComparisonModal').fadeOut(300);
     $('body').removeClass('modal-open');
-    
+
     // Destroy chart when closing modal
     if (multiChart) {
         multiChart.destroy();
@@ -1497,7 +1483,7 @@ function closeMultiModal() {
 }
 
 // Update the existing setupEventListeners to include checkbox handlers
-$(document).on('change', '.food-checkbox', function() {
+$(document).on('change', '.food-checkbox', function () {
     const foodIndex = parseInt($(this).data('food-index'));
     handleFoodSelection(foodIndex);
 });

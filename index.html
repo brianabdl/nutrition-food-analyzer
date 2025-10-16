@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +13,7 @@
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
     <!-- Header Section -->
     <header class="header">
@@ -87,12 +89,13 @@
                 <div class="table-info-bar">
                     <span class="table-info-text">
                         <i class="fas fa-table"></i>
-                        Page <span id="currentPageDisplay">1</span> of <span id="totalPagesDisplay">1</span> • <span id="itemsPerPageDisplay">10</span> items per page
+                        Page <span id="currentPageDisplay">1</span> of <span id="totalPagesDisplay">1</span> • <span
+                            id="itemsPerPageDisplay">10</span> items per page
                     </span>
                 </div>
                 <div class="table-container">
                     <table id="foodTable" class="food-table">
-                                                <thead>
+                        <thead>
                             <tr>
                                 <th class="select-column">
                                     <input type="checkbox" id="selectAll" title="Select All">
@@ -128,12 +131,13 @@
                 <h3>No foods found</h3>
                 <p>Try adjusting your search terms or clearing the search filter.</p>
             </div>
-            
+
             <!-- Pagination Section -->
             <section class="pagination-section" id="paginationSection" style="display: none;">
                 <div class="pagination-container">
                     <div class="pagination-info">
-                        <span>Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalItems">0</span> foods</span>
+                        <span>Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span
+                                id="totalItems">0</span> foods</span>
                     </div>
                     <div class="pagination-controls">
                         <button id="prevPage" class="btn btn-secondary pagination-btn" disabled>
@@ -150,7 +154,7 @@
                     </div>
                 </div>
             </section>
-            
+
             <!-- Scroll to Top Button -->
             <button id="scrollToTop" class="scroll-to-top" style="display: none;">
                 <i class="fas fa-chevron-up"></i>
@@ -343,7 +347,9 @@
             <div class="footer-content">
                 <div class="attribution">
                     <i class="fas fa-database"></i>
-                    <span>Data Source: <a href="https://www.kaggle.com/datasets/nauvalalmas/data-makanan-stunting" target="_blank" rel="noopener noreferrer">Kaggle – Data Makanan Stunting by Nauval Almas</a></span>
+                    <span>Data Source: <a href="https://www.kaggle.com/datasets/nauvalalmas/data-makanan-stunting"
+                            target="_blank" rel="noopener noreferrer">Kaggle – Data Makanan Stunting by Nauval
+                            Almas</a></span>
                 </div>
                 <div class="tech-stack">
                     <span>Built with HTML, CSS, JavaScript & jQuery</span>
@@ -355,4 +361,5 @@
     <!-- JavaScript -->
     <script src="script.js"></script>
 </body>
+
 </html>
