@@ -1186,7 +1186,6 @@ function updateSelectionUI() {
     const count = selectedFoods.length;
     
     $('#selectedCount').text(count);
-    $('#compareSelected').prop('disabled', count < 2);
     
     // Show/hide comparison toolbar
     if (count > 0) {
