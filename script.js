@@ -942,8 +942,6 @@ function createNutritionChart(comparisons) {
     
     const labels = validComparisons.map(c => c.nutrient.replace(/ \([^)]*\)/g, '')); // Remove units from labels
     const foodValues = validComparisons.map(c => parseFloat(c.foodValue) || 0);
-    const minValues = validComparisons.map(c => parseFloat(c.standard.Minimum) || 0);
-    const maxValues = validComparisons.map(c => parseFloat(c.standard.Maximum) || parseFloat(c.standard.Minimum) || 0);
     
     currentChart = new Chart(ctx, {
         type: 'bar',
