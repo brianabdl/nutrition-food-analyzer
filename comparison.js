@@ -73,47 +73,36 @@ async function loadDataAndCompare(foodNames) {
     try {
         showLoading(true);
         
-        // Load both CSV files
-        const [foodsResponse, standardsResponse] = await Promise.all([
-            fetch('foods.csv'),
-            fetch('standard-nutrition.csv')
-        ]);
+        // Load data from PHP API
+        const namesParam = foodNames.map(encodeURIComponent).join(',');
+        const response = await fetch(`${API_URL}?action=get_comparison&names=${namesParam}`);
         
-        if (!foodsResponse.ok || !standardsResponse.ok) {
-            throw new Error('Failed to load data files');
+        if (!response.ok) {
+            throw new Error('Failed to load data from API');
         }
         
-        const foodsCSV = await foodsResponse.text();
-        const standardsCSV = await standardsResponse.text();
+        const result = await response.json();
         
-        // Parse CSV data
-        foodsData = parseCSV(foodsCSV);
-        standardsData = parseCSV(standardsCSV);
-        
-        console.log(`Loaded ${foodsData.length} foods and ${standardsData.length} standards`);
-        
-        // Find all requested foods
-        const foundFoods = [];
-        const notFoundFoods = [];
-        
-        foodNames.forEach(foodName => {
-            const food = findFood(foodName);
-            if (food) {
-                foundFoods.push({
-                    food: food,
-                    formattedName: formatFoodName(food.Menu)
-                });
-            } else {
-                notFoundFoods.push(foodName);
-            }
-        });
-        
-        if (foundFoods.length < 2) {
-            showErrorMessage(`Could not find enough foods for comparison. Missing: ${notFoundFoods.join(', ')}`);
+        if (!result.success) {
+            showErrorMessage(result.error || 'Failed to load comparison data');
             return;
         }
         
-        selectedFoods = foundFoods;
+        console.log(`Loaded ${result.data.count} foods from API`);
+        
+        const foods = result.data.foods;
+        standardsData = result.data.standards;
+        
+        if (foods.length < 2) {
+            showErrorMessage('Could not find enough foods for comparison');
+            return;
+        }
+        
+        // Format foods for display
+        selectedFoods = foods.map(food => ({
+            food: food,
+            formattedName: formatFoodName(food.Menu)
+        }));
         
         // Show comparison
         showMultiComparison();

@@ -1,0 +1,53 @@
+# Python
+*.py
+__pycache__/
+*.pyc
+
+# Database
+data/*.db
+data/*.db-journal
+data/*.db-shm
+data/*.db-wal
+
+# Cache
+cache/*.cache
+cache/*.tmp
+
+# Backups
+backups/*.db
+
+# Environment
+.env
+.env.local
+
+# Docker
+.docker/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Logs
+logs/
+*.log
+
+# Node modules (if using npm)
+node_modules/
+
+# Composer (if using PHP packages)
+vendor/
+composer.lock

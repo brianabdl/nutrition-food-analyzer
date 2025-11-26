@@ -1,0 +1,44 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+README_PHP.md
+OPTIMIZATION_SUMMARY.md
+*.md
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database files (will be created in container)
+data/*.db
+data/*.db-journal
+
+# Cache files (will be created in container)
+cache/*.cache
+
+# Log files
+*.log
+
+# Python files (not needed)
+*.py
+__pycache__
+
+# Temporary files
+*.tmp
+*.temp
+
+# Docker files (no need to copy these into image)
+docker-compose.yml
+Dockerfile
+.dockerignore

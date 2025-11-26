@@ -1,31 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About the Team - Food Nutrition Analyzer</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
-    <!-- Header Section -->
-    <header class="header">
-        <div class="container">
-            <h1 class="app-title">
-                <i class="fas fa-users"></i>
-                About the Team
-            </h1>
-            <p class="app-subtitle">Meet the developers behind the Food Nutrition Analyzer</p>
-        </div>
-    </header>
+<?php
+/**
+ * About Page (PHP Version)
+ */
+
+require_once __DIR__ . '/config/config.php';
+
+// Page configuration
+$page_title = 'About the Team - Food Nutrition Analyzer';
+$header_title = 'About the Team';
+$header_subtitle = 'Meet the developers behind the Food Nutrition Analyzer';
+$header_icon = 'users';
+
+include INCLUDES_PATH . '/header.php';
+?>
 
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
             <!-- Navigation Back -->
             <section class="navigation-section">
-                <a href="index.html" class="btn btn-secondary nav-back">
+                <a href="index.php" class="btn btn-secondary nav-back">
                     <i class="fas fa-arrow-left"></i>
                     Back to App
                 </a>
@@ -82,7 +76,7 @@
                             <p class="member-role">Lead Developer</p>
                             <div class="member-skills">
                                 <span class="skill-tag">Frontend Development</span>
-                                <span class="skill-tag">UI/UX Design</span>
+                                <span class="skill-tag">Backend PHP</span>
                                 <span class="skill-tag">JavaScript</span>
                             </div>
                         </div>
@@ -121,23 +115,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- AI Assistant -->
-                    <div class="team-member ai-member">
-                        <div class="member-avatar ai-avatar">
-                            <i class="fas fa-robot"></i>
-                        </div>
-                        <div class="member-info">
-                            <h3 class="member-name">Claude Sonnet 4</h3>
-                            <p class="member-id">AI Assistant</p>
-                            <p class="member-role">Development Mentor</p>
-                            <div class="member-skills">
-                                <span class="skill-tag">Code Architecture</span>
-                                <span class="skill-tag">Best Practices</span>
-                                <span class="skill-tag">Documentation</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </section>
 
@@ -149,6 +126,14 @@
                 </h2>
                 
                 <div class="tech-grid">
+                    <div class="tech-item">
+                        <i class="fab fa-php"></i>
+                        <span>PHP 7.4+</span>
+                    </div>
+                    <div class="tech-item">
+                        <i class="fas fa-database"></i>
+                        <span>SQLite</span>
+                    </div>
                     <div class="tech-item">
                         <i class="fab fa-html5"></i>
                         <span>HTML5</span>
@@ -164,14 +149,6 @@
                     <div class="tech-item">
                         <i class="fas fa-chart-line"></i>
                         <span>Chart.js</span>
-                    </div>
-                    <div class="tech-item">
-                        <i class="fab fa-font-awesome"></i>
-                        <span>Font Awesome</span>
-                    </div>
-                    <div class="tech-item">
-                        <i class="fas fa-database"></i>
-                        <span>CSV Data</span>
                     </div>
                 </div>
             </section>
@@ -207,7 +184,7 @@
                             <i class="fas fa-code"></i>
                         </div>
                         <div class="stat-content">
-                            <h3>2000+</h3>
+                            <h3>3000+</h3>
                             <p>Lines of Code</p>
                         </div>
                     </div>
@@ -243,19 +220,4 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="attribution">
-                    <i class="fas fa-database"></i>
-                    <span>Data Source: <a href="https://www.kaggle.com/datasets/nauvalalmas/data-makanan-stunting" target="_blank" rel="noopener noreferrer">Kaggle – Data Makanan Stunting by Nauval Almas</a></span>
-                </div>
-                <div class="tech-stack">
-                    <span>Built with HTML, CSS, JavaScript & jQuery</span>
-                </div>
-            </div>
-        </div>
-    </footer>
-</body>
-</html>
+<?php include INCLUDES_PATH . '/footer.php'; ?>

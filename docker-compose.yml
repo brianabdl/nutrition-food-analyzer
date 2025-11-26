@@ -1,0 +1,89 @@
+services:
+  # MySQL Database Server
+  mysql:
+    image: mysql:8.0
+    container_name: nutrition-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: nutrition_db
+      MYSQL_USER: nutrition_user
+      MYSQL_PASSWORD: nutrition_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - nutrition-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: --default-authentication-plugin=mysql_native_password
+
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: nutrition-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root_password
+      UPLOAD_LIMIT: 100M
+    ports:
+      - "8081:80"
+    networks:
+      - nutrition-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # PHP Apache Web Server
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nutrition-app
+    ports:
+      - "8080:80"
+    volumes:
+      # Mount source code for development (hot reload)
+      - ./:/var/www/html
+      - nutrition-cache:/var/www/html/cache
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+      - PHP_MEMORY_LIMIT=256M
+      - PHP_UPLOAD_MAX_FILESIZE=10M
+      - PHP_POST_MAX_SIZE=10M
+      - PHP_MAX_EXECUTION_TIME=300
+      # Database configuration
+      - DB_HOST=mysql
+      - DB_NAME=nutrition_db
+      - DB_USER=nutrition_user
+      - DB_PASSWORD=nutrition_password
+      - DB_PORT=3306
+    networks:
+      - nutrition-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  nutrition-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+  nutrition-cache:
+    driver: local

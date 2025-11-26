@@ -64,32 +64,31 @@ async function loadDataAndAnalyze(foodName) {
     try {
         showLoading(true);
         
-        // Load both CSV files
-        const [foodsResponse, standardsResponse] = await Promise.all([
-            fetch('foods.csv'),
-            fetch('standard-nutrition.csv')
-        ]);
+        // Load data from PHP API
+        const response = await fetch(`${API_URL}?action=get_nutrition_analysis&name=${encodeURIComponent(foodName)}`);
         
-        if (!foodsResponse.ok || !standardsResponse.ok) {
-            throw new Error('Failed to load data files');
+        if (!response.ok) {
+            throw new Error('Failed to load data from API');
         }
         
-        const foodsCSV = await foodsResponse.text();
-        const standardsCSV = await standardsResponse.text();
+        const result = await response.json();
         
-        // Parse CSV data
-        foodsData = parseCSV(foodsCSV);
-        standardsData = parseCSV(standardsCSV);
-        
-        // Find the specific food
-        const food = findFood(foodName);
-        if (!food) {
-            showErrorMessage(`Food "${foodName}" not found in database`);
+        if (!result.success) {
+            if (result.error && result.error.includes('not found')) {
+                showErrorMessage(`Food "${foodName}" not found in database`);
+            } else {
+                showErrorMessage(result.error || 'Failed to load nutrition data');
+            }
             return;
         }
         
+        // Extract data from API response
+        const food = result.data.food;
+        const comparisons = result.data.comparisons;
+        const statistics = result.data.statistics;
+        
         // Show analysis
-        showNutritionAnalysis(food);
+        showNutritionAnalysisFromAPI(food, comparisons, statistics);
         
     } catch (error) {
         console.error('Error loading data:', error);
@@ -97,6 +96,32 @@ async function loadDataAndAnalyze(foodName) {
     } finally {
         showLoading(false);
     }
+}
+
+/**
+ * Show nutrition analysis from API response
+ */
+function showNutritionAnalysisFromAPI(food, comparisons, statistics) {
+    // Set food name in title
+    const formattedName = formatFoodName(food.Menu);
+    $('#foodName').text(formattedName);
+    
+    // Update summary cards with API statistics
+    $('#totalNutrients').text(statistics.total_nutrients);
+    $('#safeNutrients').text(statistics.safe_nutrients);
+    $('#safetyPercentage').text(`${statistics.safety_percentage}%`);
+    
+    // Render comparison table
+    renderComparisonTableFromAPI(comparisons);
+    
+    // Render nutrient information cards
+    renderNutrientInfoCardsFromAPI(comparisons);
+    
+    // Create nutrition chart
+    createNutritionChartFromAPI(comparisons);
+    
+    // Show content and hide loading
+    $('#nutritionContent').show();
 }
 
 /**
@@ -320,10 +345,10 @@ function updateSummaryCards(comparisons) {
 }
 
 /**
- * Render the detailed comparison table
- * @param {Array} comparisons - Array of comparison objects
+ * Render the detailed comparison table from API data
+ * @param {Array} comparisons - Array of comparison objects from API
  */
-function renderComparisonTable(comparisons) {
+function renderComparisonTableFromAPI(comparisons) {
     const tbody = $('#comparisonTableBody');
     tbody.empty();
     
@@ -353,13 +378,13 @@ function renderComparisonTable(comparisons) {
                     <strong>${comparison.nutrient}</strong>
                 </td>
                 <td>
-                    <span class="nutrient-value">${formatNutrientValue(comparison.foodValue)}</span>
+                    <span class="nutrient-value">${formatNutrientValue(comparison.food_value)}</span>
                 </td>
                 <td>${rangeText}</td>
                 <td>
                     <span class="status-badge status-${comparison.status}">
                         <i class="fas fa-${getStatusIcon(comparison.status)}"></i>
-                        ${comparison.statusText}
+                        ${comparison.status_text}
                     </span>
                 </td>
                 <td>
@@ -377,8 +402,39 @@ function renderComparisonTable(comparisons) {
     $('.info-btn').on('click', function(e) {
         e.stopPropagation();
         const nutrient = $(this).data('nutrient');
-        showNutrientTooltip(e, nutrient);
+        const comparison = comparisons.find(c => c.nutrient === nutrient);
+        if (comparison && comparison.standard) {
+            showNutrientTooltipFromStandard(e, comparison.standard);
+        }
     });
+}
+
+/**
+ * Show tooltip with nutrient information from standard object
+ */
+function showNutrientTooltipFromStandard(event, standard) {
+    const tooltip = $('#tooltip');
+    let content = `<strong>${standard.Nutrisi}</strong><br>`;
+    
+    if (standard['Fungsi Zat']) {
+        content += `<strong>Function:</strong> ${standard['Fungsi Zat']}<br>`;
+    }
+    if (standard['Dampak Kelebihan']) {
+        content += `<strong>Excess Effects:</strong> ${standard['Dampak Kelebihan']}<br>`;
+    }
+    if (standard['Dampak Kekurangan']) {
+        content += `<strong>Deficiency Effects:</strong> ${standard['Dampak Kekurangan']}`;
+    }
+    
+    tooltip.html(content);
+    tooltip.css({
+        top: event.pageY + 10,
+        left: event.pageX + 10
+    }).addClass('show');
+    
+    // Hide tooltip after 5 seconds or on next click
+    setTimeout(() => tooltip.removeClass('show'), 5000);
+    $(document).one('click', () => tooltip.removeClass('show'));
 }
 
 /**
@@ -446,10 +502,10 @@ function showNutrientTooltip(event, nutrient) {
 }
 
 /**
- * Render nutrient information cards
- * @param {Array} comparisons - Array of comparison objects
+ * Render nutrient information cards from API data
+ * @param {Array} comparisons - Array of comparison objects from API
  */
-function renderNutrientInfoCards(comparisons) {
+function renderNutrientInfoCardsFromAPI(comparisons) {
     const container = $('#nutrientInfoSection');
     container.empty();
     
@@ -510,10 +566,10 @@ function getNutrientIcon(nutrient) {
 }
 
 /**
- * Create nutrition comparison chart using Chart.js
- * @param {Array} comparisons - Array of comparison objects
+ * Create nutrition comparison chart from API data
+ * @param {Array} comparisons - Array of comparison objects from API
  */
-function createNutritionChart(comparisons) {
+function createNutritionChartFromAPI(comparisons) {
     const canvas = document.getElementById('nutritionChart');
     const ctx = canvas.getContext('2d');
     
@@ -524,7 +580,7 @@ function createNutritionChart(comparisons) {
     
     // Filter comparisons with valid standards and food values
     const validComparisons = comparisons.filter(c => 
-        c.standard && c.foodValue !== null && c.foodValue !== undefined && 
+        c.standard && c.food_value !== null && c.food_value !== undefined && 
         (c.standard.Minimum || c.standard.Maximum)
     ).slice(0, 10); // Limit to 10 nutrients for better visualization
     
@@ -538,7 +594,7 @@ function createNutritionChart(comparisons) {
     }
     
     const labels = validComparisons.map(c => c.nutrient.replace(/ \([^)]*\)/g, '')); // Remove units from labels
-    const foodValues = validComparisons.map(c => parseFloat(c.foodValue) || 0);
+    const foodValues = validComparisons.map(c => parseFloat(c.food_value) || 0);
     const minValues = validComparisons.map(c => parseFloat(c.standard.Minimum) || 0);
     const maxValues = validComparisons.map(c => parseFloat(c.standard.Maximum) || parseFloat(c.standard.Minimum) || 0);
     
@@ -585,7 +641,7 @@ function createNutritionChart(comparisons) {
                     callbacks: {
                         afterLabel: function(context) {
                             const comparison = validComparisons[context.dataIndex];
-                            return `Status: ${comparison.statusText}`;
+                            return `Status: ${comparison.status_text}`;
                         }
                     }
                 }

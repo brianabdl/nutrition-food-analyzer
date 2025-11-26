@@ -107,41 +107,42 @@ function setupEventListeners() {
 }
 
 /**
- * Load CSV data files
+ * Load data from PHP API
  */
 async function loadData() {
     showLoading(true);
     
     try {
-        console.log('Loading CSV files...');
+        console.log('Loading data from API...');
         
-        // Load both CSV files simultaneously
-        const [foodsResponse, standardsResponse] = await Promise.all([
-            fetch('foods.csv'),
-            fetch('standard-nutrition.csv')
-        ]);
+        // Load foods and standards from API
+        const response = await fetch(`${API_URL}?action=get_foods&page=${currentPage}&limit=${API_CONFIG.itemsPerPage}`);
         
-        if (!foodsResponse.ok || !standardsResponse.ok) {
-            throw new Error('Failed to load CSV files');
+        if (!response.ok) {
+            throw new Error('Failed to load data from API');
         }
         
-        const foodsText = await foodsResponse.text();
-        const standardsText = await standardsResponse.text();
+        const result = await response.json();
         
-        // Parse CSV data
-        foodsData = parseCSV(foodsText);
-        standardsData = parseCSV(standardsText);
+        if (!result.success) {
+            throw new Error(result.error || 'API returned error');
+        }
         
-        console.log(`Loaded ${foodsData.length} foods and ${standardsData.length} nutrition standards`);
-        
-        // Initialize the display
+        foodsData = result.data.foods;
         filteredFoodsData = [...foodsData];
-        renderFoodTable();
-        updateResultsCount();
+        
+        // Update pagination info
+        totalPages = result.data.pagination.total_pages;
+        currentPage = result.data.pagination.current_page;
+        
+        console.log(`Loaded ${foodsData.length} foods from API`);
+        
+        // Render the table
+        renderFoodTableFromAPI(result.data);
         
     } catch (error) {
         console.error('Error loading data:', error);
-        showError('Failed to load nutrition data. Please check if CSV files are available.');
+        showError('Failed to load nutrition data. Please check your connection.');
     } finally {
         showLoading(false);
     }
@@ -206,16 +207,20 @@ function parseCSVLine(line) {
 }
 
 /**
- * Render the food table with current filtered data and pagination
+ * Render food table from API response
  */
-function renderFoodTable() {
+function renderFoodTableFromAPI(apiData) {
     const tbody = $('#foodTableBody');
     tbody.empty();
     
-    if (filteredFoodsData.length === 0) {
+    const foods = apiData.foods;
+    const pagination = apiData.pagination;
+    
+    if (foods.length === 0) {
         $('#noResults').show();
         $('.table-section').hide();
         $('#paginationSection').hide();
+        $('#resultsCount').text(0);
         return;
     }
     
@@ -223,23 +228,8 @@ function renderFoodTable() {
     $('.table-section').show();
     $('#paginationSection').show();
     
-    // Calculate pagination
-    totalPages = Math.ceil(filteredFoodsData.length / itemsPerPage);
-    
-    // Ensure current page is valid
-    if (currentPage > totalPages) {
-        currentPage = 1;
-    }
-    
-    // Calculate start and end indices for current page
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, filteredFoodsData.length);
-    
-    // Get data for current page
-    const pageData = filteredFoodsData.slice(startIndex, endIndex);
-    
-    pageData.forEach((food, pageIndex) => {
-        const actualIndex = startIndex + pageIndex; // Real index in filteredFoodsData
+    foods.forEach((food, index) => {
+        const actualIndex = index; // Index in current page
         const formattedFoodName = formatFoodName(food.Menu);
         const isSelected = selectedFoods.some(sf => sf.foodId === food.Menu);
         
@@ -264,7 +254,7 @@ function renderFoodTable() {
                     <span class="nutrient-value">${formatNutrientValue(food['Carbohydrates (g)'])}</span>
                 </td>
                 <td class="action-column">
-                    <button class="btn btn-primary btn-analyze" data-food-index="${actualIndex}">
+                    <button class="btn btn-primary btn-analyze" data-food-name="${escapeHtml(food.Menu)}">
                         <i class="fas fa-chart-bar"></i>
                         Analyze
                     </button>
@@ -277,20 +267,38 @@ function renderFoodTable() {
     
     // Attach click handlers for analyze buttons - navigate to nutrition page
     $('.btn-analyze').on('click', function () {
-        const foodIndex = $(this).data('food-index');
-        const food = filteredFoodsData[foodIndex];
-        const foodName = encodeURIComponent(food.Menu || '');
-        window.location.href = `nutrition.html?food=${foodName}`;
+        const foodName = $(this).data('food-name');
+        window.location.href = `nutrition.php?food=${encodeURIComponent(foodName)}`;
     });
     
     // Setup scroll indicator for table
     setupScrollIndicator();
     
-    // Update pagination controls
+    // Update pagination
+    totalPages = pagination.total_pages;
+    currentPage = pagination.current_page;
     updatePaginationControls();
+    updatePaginationInfo(pagination);
     
-    // Update pagination info
-    updatePaginationInfo(startIndex, endIndex);
+    // Update results count
+    $('#resultsCount').text(pagination.total_items);
+}
+
+/**
+ * Update pagination info from API response
+ */
+function updatePaginationInfo(pagination) {
+    const startIndex = (pagination.current_page - 1) * pagination.items_per_page + 1;
+    const endIndex = Math.min(startIndex + pagination.items_per_page - 1, pagination.total_items);
+    
+    $('#showingStart').text(startIndex);
+    $('#showingEnd').text(endIndex);
+    $('#totalItems').text(pagination.total_items);
+    
+    // Update table info bar
+    $('#currentPageDisplay').text(pagination.current_page);
+    $('#totalPagesDisplay').text(pagination.total_pages);
+    $('#itemsPerPageDisplay').text(pagination.items_per_page);
 }
 
 /**
@@ -407,8 +415,8 @@ function updatePaginationInfo(startIndex, endIndex) {
 function goToPage(page) {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
         currentPage = page;
-        renderFoodTable();
-        updateResultsCount();
+        const searchTerm = $('#searchInput').val().trim();
+        loadDataWithSearch(searchTerm);
         
         // Scroll to top of table when changing pages
         $('.table-container').scrollTop(0);
@@ -525,27 +533,58 @@ function formatFoodName(foodName) {
  * Handle search input
  */
 function handleSearch() {
-    const searchTerm = $('#searchInput').val().toLowerCase().trim();
+    const searchTerm = $('#searchInput').val().trim();
     
     // Show/hide clear button based on search input
     if (searchTerm === '') {
         $('#clearSearch').hide();
-        filteredFoodsData = [...foodsData];
     } else {
         $('#clearSearch').show();
-        filteredFoodsData = foodsData.filter(food => {
-            const originalName = (food.Menu || '').toLowerCase();
-            const formattedName = formatFoodName(food.Menu).toLowerCase();
-            
-            // Search in both original and formatted names
-            return originalName.includes(searchTerm) || formattedName.includes(searchTerm);
-        });
     }
     
     // Reset to first page when searching
     currentPage = 1;
-    renderFoodTable();
-    updateResultsCount();
+    
+    // Load data from API with search
+    loadDataWithSearch(searchTerm);
+}
+
+/**
+ * Load data with search from API
+ */
+async function loadDataWithSearch(search = '') {
+    showLoading(true);
+    
+    try {
+        const url = `${API_URL}?action=get_foods&page=${currentPage}&limit=${API_CONFIG.itemsPerPage}&search=${encodeURIComponent(search)}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error('Failed to search foods');
+        }
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'API returned error');
+        }
+        
+        foodsData = result.data.foods;
+        filteredFoodsData = [...foodsData];
+        
+        // Update pagination info
+        totalPages = result.data.pagination.total_pages;
+        currentPage = result.data.pagination.current_page;
+        
+        // Render the table
+        renderFoodTableFromAPI(result.data);
+        
+    } catch (error) {
+        console.error('Error searching foods:', error);
+        showError('Failed to search foods. Please try again.');
+    } finally {
+        showLoading(false);
+    }
 }
 
 /**
@@ -553,19 +592,17 @@ function handleSearch() {
  */
 function clearSearch() {
     $('#searchInput').val('');
-    $('#clearSearch').hide(); // Hide clear button when search is cleared
-    filteredFoodsData = [...foodsData];
-    currentPage = 1; // Reset to first page
-    renderFoodTable();
-    updateResultsCount();
+    $('#clearSearch').hide();
+    currentPage = 1;
+    loadDataWithSearch('');
 }
 
 /**
  * Update results count display
  */
 function updateResultsCount() {
-    $('#resultsCount').text(filteredFoodsData.length);
-    $('#visibleRows').text(filteredFoodsData.length);
+    // Results count is now updated by API response
+    // This function is kept for compatibility
 }
 
 /**
@@ -1219,14 +1256,14 @@ function navigateToComparison() {
         .join(',');
     
     console.log('Final foodNames string:', foodNames);
-    console.log('Final URL:', `comparison.html?foods=${foodNames}`);
+    console.log('Final URL:', `comparison.php?foods=${foodNames}`);
     
     if (!foodNames) {
         showError('No valid food names found for comparison');
         return;
     }
     
-    window.location.href = `comparison.html?foods=${foodNames}`;
+    window.location.href = `comparison.php?foods=${foodNames}`;
 }
 
 /**

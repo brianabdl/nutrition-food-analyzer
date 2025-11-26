@@ -1,38 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiple Foods Comparison - Food Nutrition Analyzer</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- jQuery CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <!-- Chart.js CDN for charts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
-    <!-- Header Section -->
-    <header class="header">
-        <div class="container">
-            <div class="header-main">
-                <h1 class="app-title">
-                    <i class="fas fa-balance-scale"></i>
-                    <div class="title-content">
-                        <span class="title-text">Multiple Foods Comparison</span>
-                        <p class="app-subtitle">Compare nutritional values across multiple foods</p>
-                    </div>
-                </h1>
-            </div>
-            <div class="header-nav">
-                <a href="index.html" class="nav-link">
-                    <i class="fas fa-arrow-left"></i>
-                    Back to Search
-                </a>
-            </div>
-        </div>
-    </header>
+<?php
+/**
+ * Comparison Page (PHP Version)
+ */
+
+require_once __DIR__ . '/config/config.php';
+
+// Page configuration
+$page_title = 'Multiple Foods Comparison - Food Nutrition Analyzer';
+$header_title = 'Multiple Foods Comparison';
+$header_subtitle = 'Compare nutritional values across multiple foods';
+$header_icon = 'balance-scale';
+$show_back_link = true;
+$include_chart = true;
+
+include INCLUDES_PATH . '/header.php';
+?>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -131,24 +113,10 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="attribution">
-                    <i class="fas fa-database"></i>
-                    <span>Data Source: <a href="https://www.kaggle.com/datasets/nauvalalmas/data-makanan-stunting"
-                            target="_blank" rel="noopener noreferrer">Kaggle – Data Makanan Stunting by Nauval
-                            Almas</a></span>
-                </div>
-                <div class="tech-stack">
-                    <span>Built with HTML, CSS, JavaScript & jQuery</span>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- JavaScript -->
+    <!-- JavaScript - Updated for PHP backend -->
+    <script>
+        const API_URL = 'controllers/api.php';
+    </script>
     <script src="comparison.js"></script>
-</body>
-</html>
+
+<?php include INCLUDES_PATH . '/footer.php'; ?>
