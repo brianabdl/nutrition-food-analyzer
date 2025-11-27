@@ -128,7 +128,7 @@ include INCLUDES_PATH . '/header.php';
                 <div class="tech-grid">
                     <div class="tech-item">
                         <i class="fab fa-php"></i>
-                        <span>PHP 7.4+</span>
+                        <span>PHP 8.1</span>
                     </div>
                     <div class="tech-item">
                         <i class="fas fa-database"></i>
@@ -136,11 +136,11 @@ include INCLUDES_PATH . '/header.php';
                     </div>
                     <div class="tech-item">
                         <i class="fab fa-html5"></i>
-                        <span>HTML5</span>
+                        <span>HTML</span>
                     </div>
                     <div class="tech-item">
                         <i class="fab fa-css3-alt"></i>
-                        <span>CSS3</span>
+                        <span>CSS</span>
                     </div>
                     <div class="tech-item">
                         <i class="fab fa-js-square"></i>

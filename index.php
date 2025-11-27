@@ -121,7 +121,7 @@ include INCLUDES_PATH . '/header.php';
                                 </td>
                                 <td>
                                     <div class="food-name" title="<?php echo htmlspecialchars($food['Menu']); ?>">
-                                        <?php echo htmlspecialchars($food['Menu']); ?>
+                                        <?php echo htmlspecialchars($foodModel->formatFoodName($food['Menu'])); ?>
                                     </div>
                                 </td>
                                 <td>

@@ -34,6 +34,64 @@ class Food {
         'Iron (mg)' => 'iron_mg',
         'Zinc (mg)' => 'zinc_mg'
     ];
+
+    /**
+     * Format food names to proper case with better readability (keeping original Indonesian names)
+     * @param string $foodName - Raw food name from CSV
+     * @return string Properly formatted food name
+     */
+    function formatFoodName($foodName) {
+        if (!$foodName || !is_string($foodName)) {
+            return 'Unknown Food';
+        }
+        
+        // Clean the food name while preserving original Indonesian terms
+        $formatted = trim($foodName);
+        
+        // Handle specific patterns and clean formatting
+        $formatted = preg_replace('/\s+/', ' ', $formatted);
+        $formatted = preg_replace('/[\/\\\\]+/', ' / ', $formatted);
+        $formatted = preg_replace('/\s*\+\s*/', ' + ', $formatted);
+        $formatted = preg_replace('/\s*\-\s*/', ' - ', $formatted);
+        $formatted = preg_replace('/\s*\(\s*/', ' (', $formatted);
+        $formatted = preg_replace('/\s*\)\s*/', ') ', $formatted);
+        
+        // Handle parentheses content
+        $formatted = preg_replace('/\(\s*>\s*(\d+)\s*(.*?)\s*\)/i', '(>$1 $2)', $formatted);
+        
+        // Fix common abbreviations and spacing issues
+        $formatted = preg_replace('/\bpt(h?)\b/i', 'putih', $formatted);
+        $formatted = preg_replace('/\bcampur\b/i', 'campur', $formatted);
+        
+        // Clean up slashes and special characters
+        $formatted = preg_replace('/\s*\/\s*/', ' / ', $formatted);
+        $formatted = preg_replace('/\s*\\\\\s*/', ' / ', $formatted);
+        
+        // Capitalize each word properly while preserving Indonesian terms
+        $formatted = preg_replace_callback('/\b\w+/u', function($matches) {
+            $word = $matches[0];
+            
+            // Handle special cases for acronyms
+            $acronyms = ['dna', 'rna', 'ph', 'mg', 'kg', 'ml', 'dl', 'cl'];
+            if (in_array(strtolower($word), $acronyms)) {
+                return strtoupper($word);
+            }
+            
+            // Capitalize first letter, keep rest as is for Indonesian words
+            return mb_strtoupper(mb_substr($word, 0, 1)) . mb_strtolower(mb_substr($word, 1));
+        }, $formatted);
+        
+        // Ensure first word is always capitalized
+        $formatted = mb_strtoupper(mb_substr($formatted, 0, 1)) . mb_substr($formatted, 1);
+        
+        // Clean up final formatting
+        $formatted = preg_replace('/\s+/', ' ', $formatted);
+        $formatted = preg_replace('/\s+([\/\-\+\(\)])/', ' $1', $formatted);
+        $formatted = preg_replace('/([\/\-\+\(\)])\s+/', '$1 ', $formatted);
+        $formatted = trim($formatted);
+        
+        return $formatted;
+    }
     
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
