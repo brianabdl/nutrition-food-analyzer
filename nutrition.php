@@ -8,6 +8,9 @@ require_once __DIR__ . '/config/config.php';
 require_once MODELS_PATH . '/Food.php';
 require_once MODELS_PATH . '/Standard.php';
 
+// Require login
+$require_login = true;
+
 // Get food name from URL
 $foodName = isset($_GET['food']) ? trim($_GET['food']) : '';
 

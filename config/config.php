@@ -19,6 +19,7 @@ date_default_timezone_set('Asia/Jakarta');
 define('APP_NAME', 'Food Nutrition Analyzer');
 define('APP_VERSION', '2.0');
 define('BASE_URL', '/');
+define('ROOT_URL', ''); // Empty for root directory, or '/subdirectory' if in subdirectory
 define('CONFIG_PATH', ROOT_PATH . '/config');
 define('MODELS_PATH', ROOT_PATH . '/models');
 define('CONTROLLERS_PATH', ROOT_PATH . '/controllers');
@@ -42,6 +43,10 @@ define('API_RESPONSE_FORMAT', 'json');
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_only_cookies', 1);
 ini_set('session.cookie_secure', 0); // Set to 1 if using HTTPS
+ini_set('session.cookie_lifetime', 0); // Session cookie expires when browser closes
+ini_set('session.gc_maxlifetime', 1800); // 30 minutes
+ini_set('session.cookie_path', '/');
+ini_set('session.cookie_samesite', 'Lax'); // CSRF protection
 
 // CORS Settings (for AJAX requests)
 header('Access-Control-Allow-Origin: *');

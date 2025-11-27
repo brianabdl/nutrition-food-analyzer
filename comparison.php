@@ -5,6 +5,9 @@
 
 require_once __DIR__ . '/config/config.php';
 
+// Require login
+$require_login = true;
+
 // Page configuration
 $page_title = 'Multiple Foods Comparison - Food Nutrition Analyzer';
 $header_title = 'Multiple Foods Comparison';

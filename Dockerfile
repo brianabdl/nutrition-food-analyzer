@@ -23,7 +23,11 @@ RUN docker-php-ext-install mysqli pdo pdo_mysql mbstring exif pcntl bcmath gd
 # Enable Apache modules
 RUN a2enmod rewrite headers expires deflate
 
-# Copy application files first
+# Set development environment variable
+ENV ENVIRONMENT=development
+
+# Copy application files first (only needed for initial build)
+# In development, files are mounted via docker-compose volumes
 COPY . /var/www/html/
 
 # Copy custom Apache configuration if exists
@@ -40,9 +44,10 @@ RUN if [ -f /var/www/html/docker/php.ini ]; then \
 RUN mkdir -p /var/www/html/data \
     && mkdir -p /var/www/html/cache \
     && chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html \
-    && chmod -R 777 /var/www/html/data \
-    && chmod -R 777 /var/www/html/cache
+    && chmod -R 755 /var/www/html
+
+# Note: In development, permissions are handled by docker-compose volume mounts
+# The mounted ./: directory will have your host user permissions
 
 # Expose port 80
 EXPOSE 80
