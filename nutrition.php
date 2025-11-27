@@ -122,7 +122,7 @@ include INCLUDES_PATH . '/header.php';
             <div id="nutritionContent">
                 <!-- Food Title -->
                 <section class="food-title-section">
-                    <h2 class="food-title"><?php echo htmlspecialchars($food['Menu']); ?></h2>
+                    <h2 class="food-title"><?php echo htmlspecialchars( $foodModel->formatFoodName($food['Menu'])); ?></h2>
                 </section>
 
                 <!-- Summary Cards -->

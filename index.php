@@ -248,11 +248,32 @@ include INCLUDES_PATH . '/header.php';
     <script>
         const MAX_COMPARISON_ITEMS = <?php echo MAX_COMPARISON_ITEMS; ?>;
         let selectedFoods = [];
+        let searchTimeout = null;
+        let currentPage = <?php echo $currentPage; ?>;
         
         // Handle food selection
         $(document).ready(function() {
+            // Live Search - Auto-update table while typing
+            $('#searchInput').on('input', function() {
+                clearTimeout(searchTimeout);
+                const searchValue = $(this).val().trim();
+                
+                // Debounce: wait 500ms after user stops typing
+                searchTimeout = setTimeout(function() {
+                    currentPage = 1; // Reset to first page on new search
+                    updateFoodTable(searchValue, currentPage);
+                }, 500);
+            });
+            
+            // Prevent form submission, use AJAX instead
+            $('.search-container').on('submit', function(e) {
+                e.preventDefault();
+                const searchValue = $('#searchInput').val().trim();
+                updateFoodTable(searchValue, 1);
+            });
+            
             // Handle individual checkbox
-            $('.food-checkbox').on('change', function() {
+            $(document).on('change', '.food-checkbox', function() {
                 updateSelection();
             });
             
@@ -305,7 +326,271 @@ include INCLUDES_PATH . '/header.php';
                 const foodNames = selectedFoods.map(encodeURIComponent).join(',');
                 window.location.href = 'comparison.php?foods=' + foodNames;
             });
+            
+            // Handle pagination clicks dynamically
+            $(document).on('click', '.page-number:not(.active)', function(e) {
+                e.preventDefault();
+                const page = parseInt($(this).text()) || 1;
+                const searchValue = $('#searchInput').val().trim();
+                updateFoodTable(searchValue, page);
+            });
+            
+            $(document).on('click', '.pagination-btn:not([disabled])', function(e) {
+                e.preventDefault();
+                const href = $(this).attr('href');
+                if (!href) return;
+                
+                const urlParams = new URLSearchParams(href.split('?')[1]);
+                const page = parseInt(urlParams.get('page')) || 1;
+                const searchValue = $('#searchInput').val().trim();
+                updateFoodTable(searchValue, page);
+            });
         });
+        
+        // AJAX function to update food table
+        function updateFoodTable(searchTerm, page) {
+            const $tableSection = $('.table-section');
+            const $tableBody = $('#foodTableBody');
+            
+            // Show loading indicator
+            $tableSection.css('opacity', '0.5');
+            $tableBody.html('<tr><td colspan="7" style="text-align:center; padding:2rem;"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>');
+            
+            // Make AJAX request
+            $.ajax({
+                url: 'api/search_foods.php',
+                method: 'GET',
+                data: {
+                    search: searchTerm,
+                    page: page
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+                        const foods = data.foods;
+                        const pagination = data.pagination;
+                        
+                        // Update results count
+                        $('#resultsCount').text(pagination.totalCount);
+                        
+                        // Update table body
+                        if (foods.length > 0) {
+                            let tableHtml = '';
+                            foods.forEach(function(food) {
+                                tableHtml += `
+                                    <tr data-food='${JSON.stringify(food).replace(/'/g, '&#39;')}'>
+                                        <td class="select-column">
+                                            <input type="checkbox" class="food-checkbox" 
+                                                   data-food-name="${escapeHtml(food['Menu'])}">
+                                        </td>
+                                        <td>
+                                            <div class="food-name" title="${escapeHtml(food['Menu'])}">
+                                                ${escapeHtml(formatFoodName(food['Menu']))}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="nutrient-value">
+                                                ${food['Energy (kJ)'] !== null ? parseFloat(food['Energy (kJ)']).toFixed(2) : '-'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="nutrient-value">
+                                                ${food['Protein (g)'] !== null ? parseFloat(food['Protein (g)']).toFixed(2) : '-'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="nutrient-value">
+                                                ${food['Fat (g)'] !== null ? parseFloat(food['Fat (g)']).toFixed(2) : '-'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="nutrient-value">
+                                                ${food['Carbohydrates (g)'] !== null ? parseFloat(food['Carbohydrates (g)']).toFixed(2) : '-'}
+                                            </span>
+                                        </td>
+                                        <td class="action-column">
+                                            <a href="nutrition.php?food=${encodeURIComponent(food['Menu'])}" 
+                                               class="btn btn-primary btn-analyze">
+                                                <i class="fas fa-chart-bar"></i>
+                                                Analyze
+                                            </a>
+                                        </td>
+                                    </tr>
+                                `;
+                            });
+                            $tableBody.html(tableHtml);
+                            $('.no-results').remove();
+                        } else {
+                            // Show no results message
+                            $tableBody.html('');
+                            $('.table-container').after(`
+                                <div class="no-results">
+                                    <i class="fas fa-search"></i>
+                                    <h3>No foods found</h3>
+                                    <p>Try adjusting your search terms or clearing the search filter.</p>
+                                </div>
+                            `);
+                        }
+                        
+                        // Update table info bar
+                        $('.table-info-text').html(`
+                            <i class="fas fa-table"></i>
+                            Page ${pagination.currentPage} of ${Math.max(1, pagination.totalPages)} • 
+                            ${pagination.itemsPerPage} items per page
+                        `);
+                        
+                        // Update pagination
+                        updatePagination(pagination, searchTerm);
+                        
+                        // Update current page
+                        currentPage = pagination.currentPage;
+                        
+                        // Update URL without reloading
+                        const newUrl = searchTerm 
+                            ? `?search=${encodeURIComponent(searchTerm)}&page=${page}`
+                            : (page > 1 ? `?page=${page}` : window.location.pathname);
+                        window.history.replaceState({}, '', newUrl);
+                        
+                    } else {
+                        showError('Failed to load food data');
+                    }
+                    
+                    // Hide loading indicator
+                    $tableSection.css('opacity', '1');
+                },
+                error: function() {
+                    showError('Connection error. Please try again.');
+                    $tableSection.css('opacity', '1');
+                }
+            });
+        }
+        
+        // Update pagination controls
+        function updatePagination(pagination, searchTerm) {
+            const { currentPage, totalPages, showingStart, showingEnd, totalCount } = pagination;
+            
+            if (totalPages <= 1) {
+                $('.pagination-section').hide();
+                return;
+            }
+            
+            $('.pagination-section').show();
+            
+            // Update pagination info
+            $('.pagination-info span').text(`Showing ${showingStart} to ${showingEnd} of ${totalCount} foods`);
+            
+            // Generate pagination controls
+            let paginationHtml = '';
+            
+            // Previous button
+            if (currentPage > 1) {
+                paginationHtml += `
+                    <a href="?page=${currentPage - 1}${searchTerm ? '&search=' + encodeURIComponent(searchTerm) : ''}" 
+                       class="btn btn-secondary pagination-btn">
+                        <i class="fas fa-chevron-left"></i>
+                        Previous
+                    </a>
+                `;
+            } else {
+                paginationHtml += `
+                    <button class="btn btn-secondary pagination-btn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                        Previous
+                    </button>
+                `;
+            }
+            
+            // Page numbers
+            paginationHtml += '<div class="page-numbers">';
+            
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage < maxVisiblePages - 1) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            // First page
+            if (startPage > 1) {
+                paginationHtml += `<a href="?page=1${searchTerm ? '&search=' + encodeURIComponent(searchTerm) : ''}" class="page-number">1</a>`;
+                if (startPage > 2) {
+                    paginationHtml += '<span class="page-ellipsis">...</span>';
+                }
+            }
+            
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                const activeClass = (i === currentPage) ? 'active' : '';
+                paginationHtml += `<a href="?page=${i}${searchTerm ? '&search=' + encodeURIComponent(searchTerm) : ''}" class="page-number ${activeClass}">${i}</a>`;
+            }
+            
+            // Last page
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHtml += '<span class="page-ellipsis">...</span>';
+                }
+                paginationHtml += `<a href="?page=${totalPages}${searchTerm ? '&search=' + encodeURIComponent(searchTerm) : ''}" class="page-number">${totalPages}</a>`;
+            }
+            
+            paginationHtml += '</div>';
+            
+            // Next button
+            if (currentPage < totalPages) {
+                paginationHtml += `
+                    <a href="?page=${currentPage + 1}${searchTerm ? '&search=' + encodeURIComponent(searchTerm) : ''}" 
+                       class="btn btn-secondary pagination-btn">
+                        Next
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                `;
+            } else {
+                paginationHtml += `
+                    <button class="btn btn-secondary pagination-btn" disabled>
+                        Next
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                `;
+            }
+            
+            $('.pagination-controls').html(paginationHtml);
+        }
+        
+        // Helper: Format food name (simplified version for client-side)
+        function formatFoodName(name) {
+            if (!name) return 'Unknown Food';
+            
+            // Basic formatting: capitalize first letter of each word
+            return name
+                .toLowerCase()
+                .split(/[\s,]+/)
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+        
+        // Helper: Escape HTML
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+        
+        // Helper: Show error message
+        function showError(message) {
+            $('#foodTableBody').html(`
+                <tr>
+                    <td colspan="7" style="text-align:center; padding:2rem; color:#ef4444;">
+                        <i class="fas fa-exclamation-triangle"></i> ${message}
+                    </td>
+                </tr>
+            `);
+        }
     </script>
 
 <?php include INCLUDES_PATH . '/footer.php'; ?>
