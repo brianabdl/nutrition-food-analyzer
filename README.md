@@ -1,18 +1,6 @@
 # Nutrition Food Analyzer
-A web application for browsing, comparing, and analyzing the nutritional content of foods against daily dietary standards.
+Web application for browsing, comparing, and analyzing the nutritional content of foods against daily dietary standards.
 
-## Stack
-- **Backend:** Laravel 13 / PHP 8.3
-- **Database:** SQLite (default)
-- **Frontend:** Blade templates, Tailwind CSS v4, vanilla JS, Chart.js
-- **Build tool:** Vite 8
-
-## Features
-- **Food catalog** — paginated list of foods with 21 nutrient columns
-- **Nutrition detail** — per-nutrient status (normal / excess / deficiency) against daily standards, with advisory text (daily recommendation, function, excess/deficiency effects)
-- **Food comparison** — select up to 5 foods side-by-side; radar chart + energy/protein highlights
-- **Authentication** — login/register using `nim` (student ID) instead of email; per-session activity tracking
-- **REST API** — `GET /api/foods` with JSON pagination (session-authenticated)
 
 ## Getting Started
 ```bash
