@@ -1,53 +1,27 @@
-# Python
-*.py
-__pycache__/
-*.pyc
-
-# Database
-data/*.db
-data/*.db-journal
-data/*.db-shm
-data/*.db-wal
-
-# Cache
-cache/*.cache
-cache/*.tmp
-
-# Backups
-backups/*.db
-
-# Environment
-.env
-.env.local
-
-# Docker
-.docker/
 *.log
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
 .DS_Store
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+/.codex
+/.cursor/
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/build
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+_ide_helper.php
+Homestead.json
+Homestead.yaml
 Thumbs.db
-desktop.ini
-
-# Temporary files
-*.tmp
-*.temp
-*.bak
-
-# Logs
-logs/
-*.log
-
-# Node modules (if using npm)
-node_modules/
-
-# Composer (if using PHP packages)
-vendor/
-composer.lock
